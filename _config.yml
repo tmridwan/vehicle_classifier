@@ -1,0 +1,9 @@
+remote_theme: minimal-mistakes@master
+plugins:
+  -jekyll-remote_theme
+title: "vehicle-classification"
+description: "A Jekyll site for vehicle classification project"
+
+author:
+  name: "Taiob Md Ridwan"
+  email: "tridwan.ds25@gmail.com"
