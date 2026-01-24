@@ -1,6 +1,7 @@
 remote_theme: minimal-mistakes@master
 plugins:
-  -jekyll-remote_theme
+- jekyll-remote-theme
+
 title: "vehicle-classification"
 description: "A Jekyll site for vehicle classification project"
 
