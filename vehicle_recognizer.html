@@ -1,9 +1,13 @@
----
-title: Vehicle Recognizer
-layout: page
----
-
-<input type="file" id="photo">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Recognizer</title>
+</head>
+<body>
+    <h1>Vehicle Recognizer</h1>
+    <input type="file" id="photo">
 <div id="result"></div>
 <script type="module">
 	import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client@1.4.0/dist/index.min.js";
@@ -45,3 +49,5 @@ layout: page
 		}
 	});
 </script>
+</body>
+</html>
