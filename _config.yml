@@ -1,6 +1,6 @@
 remote_theme: alshedivat/al-folio@main
 plugins:
-- jekyll-remote-theme
+  - jekyll-remote-theme
 
 title: "vehicle-classification"
 description: "A Jekyll site for vehicle classification project"
