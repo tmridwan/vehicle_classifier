@@ -7,10 +7,12 @@ title: Vehicle Recognizer
 <input id="photo" type="file">
 <div id="results"></div>
 <script>
+document.addEventListener('DOMContentLoaded', function() {
     const photo = document.getElementById('photo');
     const results = document.getElementById('results');
 
     async function loaded(reader) {
+        results.innerHTML = '<p>Loading...</p>';
         try {
             const response = await fetch("https://tmridwan03-vehicle-recognizer.hf.space/run/predict", {
                 method: "POST",
@@ -18,14 +20,17 @@ title: Vehicle Recognizer
                 body: JSON.stringify({ data: [reader.result] })
             });
             const json = await response.json();
+            console.log('API response:', json);
             let label = "";
+            // Try to show the whole response if structure is unexpected
             if (json && json.data && json.data[0] && json.data[0].confidences) {
-                // Get top prediction
                 const confidences = json.data[0].confidences;
                 const sorted = Object.entries(confidences).sort((a, b) => b[1] - a[1]);
                 label = sorted.length ? `${sorted[0][0]} (${(sorted[0][1] * 100).toFixed(1)}%)` : "No prediction";
+            } else if (json && json.data && json.data[0] && json.data[0].label) {
+                label = json.data[0].label;
             } else {
-                label = "Prediction error";
+                label = 'Prediction error. Raw response: <pre>' + JSON.stringify(json, null, 2) + '</pre>';
             }
             results.innerHTML = `<br/> <img src="${reader.result}" width="500"> <p>${label}</p>`;
         } catch (err) {
@@ -48,4 +53,5 @@ title: Vehicle Recognizer
     } else {
         if (results) results.innerHTML = '<p style="color:red">Photo input not found.</p>';
     }
+});
 </script>
