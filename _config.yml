@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-remote_theme: daviddarnes/alembic@main
-=======
 remote_theme: sharu725/online-cv@master
->>>>>>> 62452a494878ded17db7fa8e00aa1f0eab7ca0bf
 plugins:
 - jekyll-remote-theme
 
