@@ -1,4 +1,4 @@
-remote_theme: academicpages/academicpages.github.io@master
+remote_theme: academicpages.github.io@master
 plugins:
 - jekyll-remote-theme
 
