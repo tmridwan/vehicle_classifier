@@ -4,34 +4,10 @@ layout: page
 ---
 
 <h1>Vehicle Recognizer</h1>
-<input id="photo" type="file">
-<div id="results"></div>
-
-<script>
-	async function loaded(reader) {
-		const formData = new FormData();
-		formData.append("data", photo.files[0]); // 'data' must match Gradio input name
-		try {
-			const response = await fetch("https://tmridwan03-vehicle-recognizer.hf.space/api/predict", {
-				method: "POST",
-				body: formData
-			});
-			const json = await response.json();
-			// Gradio returns an array: [top_label, mapping, processed_image, meta_md]
-			if (json && Array.isArray(json.data)) {
-				const label = json.data[0]; // top_label
-				results.innerHTML = `<br/> <img src = "${reader.result}" width="500"> <p>${label}</p>`;
-			} else {
-				results.innerHTML = `<br/> <img src = "${reader.result}" width="500"> <p style='color:red;'>API response error: <pre>${JSON.stringify(json, null, 2)}</pre></p>`;
-			}
-		} catch (err) {
-			results.innerHTML = `<p style='color:red;'>Fetch or parsing error: ${err}</p>`;
-		}
-	}
-	function read() {
-		const reader = new FileReader();
-		reader.addEventListener('load', () => loaded(reader));
-		reader.readAsDataURL(photo.files[0]);
-	}
-	photo.addEventListener('input', read);
-</script>
+<iframe 
+    src="https://tmridwan03-vehicle-recognizer.hf.space" 
+    frameborder="0" 
+    width="100%" 
+    height="800px"
+    style="border: none;"
+></iframe>
