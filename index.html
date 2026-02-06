@@ -37,9 +37,43 @@ layout: none
 
         <!-- Upload Section -->
         <div class="mb-4">
-            <label class="block text-gray-300 font-medium mb-2">Upload an Image:</label>
-            <input type="file" id="imageInput" accept="image/*" 
-                   class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer">
+            <label class="block text-gray-300 font-medium mb-2">Upload or Capture an Image:</label>
+            <div class="flex gap-2">
+                <input type="file" id="imageInput" accept="image/*" 
+                       class="flex-1 text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer">
+                <button id="cameraButton" type="button"
+                        class="bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                    </svg>
+                    Camera
+                </button>
+            </div>
+        </div>
+
+        <!-- Camera Modal -->
+        <div id="cameraModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+            <div class="bg-gray-900 rounded-2xl p-6 max-w-2xl w-full">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-white">Capture Photo</h2>
+                    <button id="closeCameraButton" class="text-gray-400 hover:text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <video id="cameraVideo" class="w-full rounded-lg mb-4 bg-black" autoplay playsinline></video>
+                <canvas id="cameraCanvas" class="hidden"></canvas>
+                <div class="flex gap-2">
+                    <button id="captureButton" class="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold py-3 px-4 rounded-lg transition duration-200">
+                        📸 Capture Photo
+                    </button>
+                    <button id="cancelCameraButton" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200">
+                        Cancel
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Image Preview -->
@@ -76,6 +110,18 @@ layout: none
         const imagePreviewContainer = document.getElementById('imagePreviewContainer');
         const resultsDiv = document.getElementById('results');
         const loadingSpinner = document.getElementById('loadingSpinner');
+        
+        // Camera elements
+        const cameraButton = document.getElementById('cameraButton');
+        const cameraModal = document.getElementById('cameraModal');
+        const cameraVideo = document.getElementById('cameraVideo');
+        const cameraCanvas = document.getElementById('cameraCanvas');
+        const captureButton = document.getElementById('captureButton');
+        const closeCameraButton = document.getElementById('closeCameraButton');
+        const cancelCameraButton = document.getElementById('cancelCameraButton');
+        
+        let cameraStream = null;
+        let capturedFile = null;
 
         const HUGGINGFACE_SPACE_NAME = "tmridwan03/vehicle_recognizer";
 
@@ -93,8 +139,62 @@ layout: none
 
         initClient();
 
+        // Camera functionality
+        cameraButton.addEventListener('click', async () => {
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } // Use back camera on mobile
+                });
+                cameraVideo.srcObject = cameraStream;
+                cameraModal.classList.remove('hidden');
+            } catch (error) {
+                showResults('Camera access denied or not available.', 'error');
+                console.error('Camera error:', error);
+            }
+        });
+
+        captureButton.addEventListener('click', () => {
+            const context = cameraCanvas.getContext('2d');
+            cameraCanvas.width = cameraVideo.videoWidth;
+            cameraCanvas.height = cameraVideo.videoHeight;
+            context.drawImage(cameraVideo, 0, 0);
+            
+            cameraCanvas.toBlob((blob) => {
+                capturedFile = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                    imagePreviewContainer.classList.remove('hidden');
+                    resultsDiv.classList.add('hidden');
+                };
+                reader.readAsDataURL(capturedFile);
+                
+                stopCamera();
+                cameraModal.classList.add('hidden');
+            }, 'image/jpeg', 0.95);
+        });
+
+        closeCameraButton.addEventListener('click', () => {
+            stopCamera();
+            cameraModal.classList.add('hidden');
+        });
+
+        cancelCameraButton.addEventListener('click', () => {
+            stopCamera();
+            cameraModal.classList.add('hidden');
+        });
+
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+        }
+
         imageInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
+            capturedFile = null; // Reset captured file when uploading from file
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -109,8 +209,10 @@ layout: none
         });
 
         predictButton.addEventListener('click', async () => {
-            if (imageInput.files.length === 0) {
-                showResults('Please select an image first.', 'error');
+            const imageFile = capturedFile || imageInput.files[0];
+            
+            if (!imageFile) {
+                showResults('Please select or capture an image first.', 'error');
                 return;
             }
             if (!client) {
@@ -120,7 +222,6 @@ layout: none
             }
 
             setLoading(true);
-            const imageFile = imageInput.files[0];
 
             try {
                 const result = await client.predict("/predict", [imageFile]);
