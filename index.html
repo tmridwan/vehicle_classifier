@@ -4,15 +4,88 @@ layout: page
 ---
 
 <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-    h1 { color: #333; text-align: center; }
-    iframe { display: block; margin: 20px auto; border: 1px solid #ddd; border-radius: 8px; }
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+    h1 { color: #333; }
+    #photo { margin: 20px 0; padding: 10px; border: 2px dashed #ccc; cursor: pointer; }
+    #results { margin-top: 20px; }
+    img { max-width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .prediction { font-size: 24px; color: #2563eb; font-weight: bold; margin-top: 10px; }
+    .loading { color: #666; font-style: italic; }
+    .error { color: #dc2626; }
 </style>
 
 <h1>Vehicle Recognizer</h1>
-<iframe 
-    src="https://tmridwan03-vehicle-recognizer.hf.space" 
-    frameborder="0" 
-    width="100%" 
-    height="850px"
-></iframe>
+<p>Upload an image to classify the vehicle type</p>
+<input id="photo" type="file" accept="image/*">
+<div id="results"></div>
+
+<script>
+    const API_URL = "https://tmridwan03-vehicle-recognizer.hf.space/call/predict";
+    
+    async function classifyImage() {
+        if (!photo.files[0]) return;
+        
+        results.innerHTML = '<p class="loading">Analyzing image...</p>';
+        
+        // Convert file to base64
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const base64Image = e.target.result;
+            
+            try {
+                // Step 1: Submit the prediction request
+                const submitResponse = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ data: [base64Image] })
+                });
+                
+                if (!submitResponse.ok) {
+                    throw new Error(`Submit failed: ${submitResponse.status}`);
+                }
+                
+                const submitResult = await submitResponse.json();
+                const eventId = submitResult.event_id;
+                
+                // Step 2: Get the result using SSE
+                const resultResponse = await fetch(`${API_URL}/${eventId}`);
+                const resultText = await resultResponse.text();
+                
+                // Parse SSE response
+                const lines = resultText.split('\n');
+                let prediction = null;
+                
+                for (const line of lines) {
+                    if (line.startsWith('data:')) {
+                        const data = JSON.parse(line.substring(5));
+                        if (data && data[0]) {
+                            prediction = data[0];
+                        }
+                    }
+                }
+                
+                if (prediction) {
+                    results.innerHTML = `
+                        <img src="${base64Image}" width="500">
+                        <p class="prediction">Prediction: ${prediction}</p>
+                    `;
+                } else {
+                    results.innerHTML = `
+                        <img src="${base64Image}" width="500">
+                        <p class="error">Could not get prediction</p>
+                        <pre>${resultText}</pre>
+                    `;
+                }
+                
+            } catch (err) {
+                results.innerHTML = `
+                    <img src="${base64Image}" width="500">
+                    <p class="error">Error: ${err.message}</p>
+                `;
+            }
+        };
+        reader.readAsDataURL(photo.files[0]);
+    }
+    
+    photo.addEventListener('change', classifyImage);
+</script>
