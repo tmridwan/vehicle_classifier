@@ -27,6 +27,7 @@ layout: page
         results.innerHTML = '<p class="loading">Analyzing image...</p>';
         
         try {
+            // Use the Simple API tab endpoint
             const response = await fetch("https://tmridwan03-vehicle-recognizer.hf.space/api/predict", {
                 method: "POST",
                 body: formData
@@ -42,8 +43,8 @@ layout: page
             // Read the file as data URL for display
             const reader = new FileReader();
             reader.onload = function(e) {
-                if (json && Array.isArray(json.data)) {
-                    const label = json.data[0]; // top_label
+                if (json && json.data && json.data[0]) {
+                    const label = json.data[0]; // prediction text
                     results.innerHTML = `
                         <img src="${e.target.result}" width="500">
                         <p class="prediction">Prediction: ${label}</p>
@@ -60,7 +61,7 @@ layout: page
             
         } catch (err) {
             results.innerHTML = `<p class="error">Error: ${err.message}</p>
-                <p>Make sure CORS is enabled on your Hugging Face Space.</p>`;
+                <p>Please upload the updated app.py to your Hugging Face Space and wait for it to rebuild.</p>`;
         }
     }
     
